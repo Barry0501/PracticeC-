@@ -53,80 +53,151 @@ void printList(LIST l){
     cout<<endl;
 }
 
-void readData(ifstream &FileIn,LIST &l){
+void readData(ifstream &FileIn,LIST &l,int &n){
     NODE* p;
     int temp;
     while(!FileIn.eof()){
         FileIn >> temp;
         p = getNode(temp);
         addFirst(l, p);
+        n++;
     }
 }
 
-int findPosition(List  l, int  x) {
-    int i = 0;
-    NODE* p = l.first;
-    while (p != NULL && p->data != x) {
-        i = i + 1;
-        p = p->next;
-    }
-    return i;
+int findLocation(LIST l, int n, int x) {
+	NODE* p = new NODE;
+	p = l.first;
+	int count = 0;
+	while(p->data!= x) {
+		count++;
+		p = p->next;
+		if (count > n)
+		{
+			return -1;
+		}
+	}
+	return count;
 }
 
-NODE* findMiddle(List l, int begin ,int end)
+int min(int a, int b) {
+	// if (a <= b)
+	// 	return a;
+	// return b;
+    return a <= b ? a : b;
+}
+
+void merge(LIST &l, int temp1[], int n1, int temp2[], int n2, int k)
 {
-    int vitriphantu = (begin + end)/2;
-    NODE* middle = l.first;
-    for (int i = 0; i < vitriphantu; i++) {
-        middle = middle->next;
-    }
-    return middle;
+	int i1, i2, i;
+	int k1, k2;
+	int j1, j2;
+	i = i1 = i2 = 0;
+	j1 = j2 = 0;
+	NODE* p = new NODE;
+	p = l.first;
+	while (n2 > 0 && n2 > 0)
+	{
+		// xác định độ dài từng dãy
+		k1 = min(k, n1);
+		k2 = min(k, n2);
+
+		// xét và trộn dãy con vào dãy
+		if (temp1[i1 + j1] < temp2[i2 + j2])
+		{
+			l.first->data = temp1[i1 + j1];
+			j1++;
+			l.first = l.first->next;
+			// trộn dãy con còn lại vào dãy
+			if (j1 == k1)
+			{
+				for (; j2 < k2; j2++) {
+					l.first->data = temp2[i2 + j2];
+					l.first = l.first->next;
+				}
+				i1 += k1; i2 += k2;
+				j1 = j2 = 0;
+				n1 -= k1; n2 -= k2;
+			}
+		}
+		else
+		{
+			l.first->data = temp2[i2 + j2];
+			j2++;
+			l.first = l.first->next;
+			// trộn dãy con còn lại vào dãy
+			if (j2 == k2)
+			{
+				for (; j1 < k1; j1++) {
+					l.first->data = temp1[i1 + j1];
+					l.first = l.first->next;
+				}
+				i1 += k1; i2 += k2;
+				j1 = j2 = 0;
+				n1 -= k1; n2 -= k2;
+			}
+		}
+	}
+	l.first = p;
 }
 
-
-void  binaryInsertionSort(List &l)
+void mergeSort(LIST &l,int n)
 {
-    NODE* begin;
-    NODE* end;
-    NODE* middle;
-    int value;
-    begin = l.first;
-    for (NODE* p=l.first->next; p !=NULL; p= p->next)
-    {
-        value = p->data;
-        begin = l.first;
-        end = p->prev;
-        int vitribegin = findPosition(l, begin->data);
-        int vitriend = findPosition(l, end->data);
-        int vitrij = findPosition(l, p->prev->data);
-        while (vitribegin <= vitriend) {
-            middle = findMiddle(l ,vitribegin, vitriend);
-            int vitrimiddle = findPosition(l, middle->data);
-            if (value < middle->data) {
-                end = middle->prev;
-                vitriend = vitrimiddle - 1;
-            }
-            else {
-                begin = middle->next;
-                vitribegin = vitrimiddle + 1;
-            }
-        }
-        
-        Node* j;
-        j = p->prev;
-        while (vitrij >= vitribegin) {
-            vitrij = vitrij - 1;
-            j->next->data = j->data;
-            j = j->prev;
-        }
-        begin->data = value;
-    }
+	int n1, n2;
+	int i;
+	int k;
+	int ik;
+	int *temp1 = new int[n];
+	int *temp2 = new int[n];
+	k = 1;
+	NODE* p = new NODE;
+	do
+	{
+		i = n1 = n2 = 0;
+		p = l.first;
+		// chia mảng ra 2 mảng phụ
+		while (i < n)
+		{
+			ik = 0;
+
+			while (ik < k && i < n)
+			{
+				if (p != NULL) {
+					temp1[n1++] = p->data;
+					p = p->next;
+				}
+				ik++;
+				i++;
+			}
+
+			ik = 0;
+
+			while (ik < k && i < n)
+			{
+				if (p != NULL) {
+					temp2[n2++] = p->data;
+					p = p->next;
+				}
+				i++;
+				ik++;
+			}
+		}
+
+		merge(l,temp1, n1, temp2, n2, k);
+
+		// tăng độ lớn tối đa dãy con
+		k *= 2;
+	} while (k < n);
+
+	delete[] temp1;
+	delete[] temp2;
 }
+
 
 int main()
 {
     ifstream FileIn;
     LIST l;
+    int n = 0;
     
     FileIn.open("INPUT.txt", ios_base::in);
     
@@ -137,10 +208,10 @@ int main()
     }
     
     init(l);
-    readData(FileIn, l);
+    readData(FileIn, l, n);
     cout<<"Mang truoc khi sap xep: \n";
     printList(l);
-    binaryInsertionSort(l);
+    mergeSort(l,n);
     cout<<"Mang sau khi sap xep: \n";
     printList(l);
     FileIn.close();
